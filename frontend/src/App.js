@@ -20,32 +20,43 @@ it was stringified before saving, we need to parse it to
 convert the string into an object. And, in case it does not exist,
 we set it to an empty object.
 */
+const getCookie = (name) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 const getStoredUser = () => {
-    const raw = localStorage.getItem("user");
-    if (!raw) return {};
-    try {
-        return JSON.parse(raw);
-    } catch (err) {
-        // Clear corrupted entry and start clean to avoid repeated parse errors.
-        localStorage.removeItem("user");
-        return {};
-    }
+  const raw = localStorage.getItem("user");
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    // Clear corrupted entry and start clean to avoid repeated parse errors.
+    localStorage.removeItem("user");
+    return {};
+  }
+};
+
+const getStoredToken = () => {
+  const cookieToken = getCookie("token");
+  if (cookieToken) return cookieToken;
+  return localStorage.getItem("token") ?? "";
 };
 
 const initialState = {
-    token: localStorage.getItem("token") ?? "",
-    user: getStoredUser(),
+  token: getStoredToken(),
+  user: getStoredUser(),
 };
 
 function App() {
-    const [store, dispatch] = useReducer(globalReducer, initialState);
+  const [store, dispatch] = useReducer(globalReducer, initialState);
 
-    return (
-        <GlobalContext.Provider value={{ store, dispatch }}>
-            <UserForm />
-            <UserDetail />
-        </GlobalContext.Provider>
-    );
+  return (
+    <GlobalContext.Provider value={{ store, dispatch }}>
+      <UserForm />
+      <UserDetail />
+    </GlobalContext.Provider>
+  );
 }
 
 export default App;

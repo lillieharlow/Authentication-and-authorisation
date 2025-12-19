@@ -59,6 +59,12 @@ token in the global state.*/
 
       const token = data.freshJWT;
 
+      // Persist token in cookie (simple, non-httpOnly) and localStorage for reloads
+      document.cookie = `token=${encodeURIComponent(
+        token
+      )}; path=/; SameSite=Lax`;
+      localStorage.setItem("token", token);
+
       dispatch({
         type: "setUser",
         data: {
@@ -75,6 +81,9 @@ token in the global state.*/
       console.error("Authentication failed:", err);
       alert("Authentication failed. Is the backend running on port 3001?");
       dispatch({ type: "setToken", data: "" });
+      // Clear any stale persisted token
+      document.cookie = "token=; Max-Age=0; path=/; SameSite=Lax";
+      localStorage.removeItem("token");
     }
   };
 
@@ -161,7 +170,7 @@ a div to display the username, password, iat and exp from the decoded jwt.
           }}
         >
           <div>
-            {decodedJWT.username ?? ""}{" "} : {decodedJWT.password ?? ""} :
+            {decodedJWT.username ?? ""} : {decodedJWT.password ?? ""} :
             {decodedJWT.iat ?? ""} : {decodedJWT.exp ?? ""}
           </div>
         </div>
