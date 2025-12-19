@@ -21,27 +21,43 @@ const validateBasicAuth = (request, response, next) => {
   // Assign the header to something easier to work with, if it exists.
   let authHeader = request.headers["authorization"] ?? null;
 
-  // If no auth header provided, stop the request.
+  // If no auth header provided, respond 401.
   if (authHeader == null) {
-    throw new Error("No auth data detected on a request to a protected route!");
+    return response.status(401).json({ error: "Missing Authorization header" });
   }
 
-  // Confirm it's a Basic auth string,
-  // and store only the encoded string.
-  if (authHeader.startsWith("Basic ")) {
-    authHeader = authHeader.substring(5).trim();
+  // Confirm it's a Basic auth string and store only the encoded part.
+  if (!authHeader.startsWith("Basic ")) {
+    return response.status(400).json({ error: "Invalid Authorization scheme" });
   }
 
-  // Decode the string.
-  let decodedAuth = Buffer.from(authHeader, "base64").toString("ascii");
+  // Correctly strip the "Basic " prefix (6 chars including space).
+  const encoded = authHeader.substring(6).trim();
 
-  // Convert it into a usable object.
-  let objDecodedAuth = { username: "", password: "" };
-  objDecodedAuth.username = decodedAuth.substring(0, decodedAuth.indexOf(":"));
-  objDecodedAuth.password = decodedAuth.substring(decodedAuth.indexOf(":") + 1);
+  try {
+    // Decode the string `username:password` from base64.
+    const decodedAuth = Buffer.from(encoded, "base64").toString("ascii");
+    const sep = decodedAuth.indexOf(":");
 
-  // Attach the object to the request
-  request.userAuthDetails = objDecodedAuth;
+    if (sep === -1) {
+      return response
+        .status(400)
+        .json({ error: "Malformed Basic credentials" });
+    }
+
+    // Convert to a usable object.
+    const objDecodedAuth = {
+      username: decodedAuth.substring(0, sep),
+      password: decodedAuth.substring(sep + 1),
+    };
+
+    // Attach the object to the request
+    request.userAuthDetails = objDecodedAuth;
+  } catch (err) {
+    return response
+      .status(400)
+      .json({ error: "Invalid base64 in Authorization header" });
+  }
 
   // Call the next step in the server's middleware chain or go to the route's callback.
   next();
