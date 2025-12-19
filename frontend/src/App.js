@@ -13,9 +13,28 @@ import UserDetail from "./components/UserDetail";
 import UserForm from "./components/UserForm";
 import globalReducer, { GlobalContext } from "./reducers/globalReducer";
 
+/* We are getting the token from the local storage and in
+case it does not exist, we set it to an empty string.
+We are getting the the user data from the local storage and since,
+it was stringified before saving, we need to parse it to
+convert the string into an object. And, in case it does not exist,
+we set it to an empty object.
+*/
+const getStoredUser = () => {
+    const raw = localStorage.getItem("user");
+    if (!raw) return {};
+    try {
+        return JSON.parse(raw);
+    } catch (err) {
+        // Clear corrupted entry and start clean to avoid repeated parse errors.
+        localStorage.removeItem("user");
+        return {};
+    }
+};
+
 const initialState = {
-    token: "",
-    user: {},
+    token: localStorage.getItem("token") ?? "",
+    user: getStoredUser(),
 };
 
 function App() {

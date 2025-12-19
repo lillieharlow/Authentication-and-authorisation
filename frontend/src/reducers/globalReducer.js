@@ -3,29 +3,39 @@ The global context named GlobalContext will be used for passing down
 values to child components using context.
 
 The reducer has two action types:
-setToken: It is used to set the jwt token in the global state.
-setUser: It is used to set the user data in the global state.*/
+- setToken: It is used to set the jwt token in the global state.
+- setUser: It is used to set the user data in the global state.
 
-import { createContext } from "react";
+Local storage:
+- localStorage.setItem("token", action.data)  to save the token in the local storage anytime
+the setToken action is dispatched.
+- localStorage.setItem("user", JSON.stringify(action.data)) to save the user data in
+the local storage anytime the setUser action is dispatched. This data needs to
+stringified because local storage can only save strings and the user data is an object.*/
 
-export const GlobalContext = createContext(null);
+import { createContext } from "react"
+
+export const GlobalContext = createContext(null)
 
 function globalReducer(state, action) {
-  switch (action.type) {
-    case "setToken": {
-      return {
-        ...state,
-        token: action.data,
-      };
+    switch(action.type) {
+        case 'setToken': {
+            localStorage.setItem("token", action.data)
+            return {
+                ...state,
+                token: action.data
+            }
+        }
+        case 'setUser': {
+            localStorage.setItem("user", action.data)
+            return {
+                ...state,
+                user: action.data
+            }
+        }
+        default:
+            return state
     }
-    case "setUser": {
-      return {
-        ...state,
-        user: action.data,
-      };
-    }
-    default:
-      return state;
-  }
 }
-export default globalReducer;
+
+export default globalReducer
